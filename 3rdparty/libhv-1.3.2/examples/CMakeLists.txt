@@ -158,9 +158,4 @@ if(WITH_MQTT)
     list(APPEND EXAMPLES mqtt_sub mqtt_pub mqtt_client_test)
 endif()
 
-glob_headers_and_sources(BEYONDXIN_API_FILES beyondxin_api)
-add_executable(beyondxin_api ${BEYONDXIN_API_FILES})
-target_link_libraries(beyondxin_api ${HV_LIBRARIES})
-list(APPEND EXAMPLES beyondxin_api)
-
 add_custom_target(examples DEPENDS ${EXAMPLES})

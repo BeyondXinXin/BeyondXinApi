@@ -14,11 +14,13 @@
 std::string Handler::m_ClientId = "";
 std::string Handler::m_ClientSecret = "";
 
-int Handler::Preprocessor(HttpRequest* req, HttpResponse* resp) {
+int Handler::Preprocessor(HttpRequest * req, HttpResponse * resp)
+{
 #if REDIRECT_HTTP_TO_HTTPS
     // 301
     if (req->scheme == "http") {
-        std::string location = hv::asprintf("https://%s:%d%s", req->host.c_str(), 8443, req->path.c_str());
+        std::string location = hv::asprintf("https://%s:%d%s", req->host.c_str(),
+                                            8443, req->path.c_str());
         return resp->Redirect(location, HTTP_STATUS_MOVED_PERMANENTLY);
     }
 #endif
@@ -28,15 +30,18 @@ int Handler::Preprocessor(HttpRequest* req, HttpResponse* resp) {
     return HTTP_STATUS_NEXT;
 }
 
-int Handler::GetPing(HttpRequest* req, HttpResponse* resp) {
+int Handler::GetPing(HttpRequest * req, HttpResponse * resp)
+{
     return resp->String("pong");
 }
 
-int Handler::Postprocessor(HttpRequest* req, HttpResponse* resp) {
+int Handler::Postprocessor(HttpRequest * req, HttpResponse * resp)
+{
     return resp->status_code;
 }
 
-int Handler::GetGithubAuthorize(const HttpContextPtr& ctx) {
+int Handler::GetGithubAuthorize(const HttpContextPtr & ctx)
+{
     std::cout << "get GithubAuthorize" << std::endl;
 
     HttpRequest req;
@@ -63,7 +68,8 @@ int Handler::GetGithubAuthorize(const HttpContextPtr& ctx) {
         std::cout << "query failed !" << std::endl;
         std::cout << "error: " << resp.body.c_str() << std::endl;
         std::cout << "error: " << rJson["error"] << std::endl;
-        std::cout << "error_description: " << rJson["error_description"] << std::endl;
+        std::cout << "error_description: " << rJson["error_description"]
+                  << std::endl;
         ctx->set("msg", rJson["error_description"]);
         response_status(ctx, 0, "OK");
         return 401;

@@ -1,18 +1,19 @@
 #include "HttpServer.h"
+#include "handler.h"
 #include "hasync.h" // import hv::async
 #include "hmain.h"
 #include "hssl.h"
 #include "hv.h"
 #include "iniparser.h"
 #include "router.h"
-#include "handler.h"
 
 hv::HttpServer g_http_server;
 hv::HttpService g_http_service;
 
-static int parse_confile(const char* confile);
+static int parse_confile(const char * confile);
 
-int parse_confile(const char* confile) {
+int parse_confile(const char * confile)
+{
     IniParser ini;
     int ret = ini.LoadFromFile(confile);
     if (ret != 0) {
@@ -57,14 +58,14 @@ int parse_confile(const char* confile) {
         if (strcmp(str.c_str(), "auto") == 0) {
             worker_processes = get_ncpu();
             hlogd("worker_processes=ncpu=%d", worker_processes);
-        }
-        else {
+        } else {
             worker_processes = atoi(str.c_str());
         }
     }
 
     // g_http_server.Static("/", "./html");
-    g_http_server.worker_processes = LIMIT(0, worker_processes, MAXNUM_WORKER_PROCESSES);
+    g_http_server.worker_processes =
+      LIMIT(0, worker_processes, MAXNUM_WORKER_PROCESSES);
     // worker_threads
     int worker_threads = 0;
     str = ini.GetValue("worker_threads");
@@ -72,8 +73,7 @@ int parse_confile(const char* confile) {
         if (strcmp(str.c_str(), "auto") == 0) {
             worker_threads = get_ncpu();
             hlogd("worker_threads=ncpu=%d", worker_threads);
-        }
-        else {
+        } else {
             worker_threads = atoi(str.c_str());
         }
     }
@@ -125,7 +125,6 @@ int parse_confile(const char* confile) {
         param.ca_file = ca_file.c_str();
         param.endpoint = HSSL_SERVER;
         if (g_http_server.newSslCtx(&param) != 0) {
-
 #ifdef OS_WIN
             if (strcmp(hssl_backend(), "schannel") == 0) {
                 hlogw("schannel needs pkcs12 formatted certificate file.");
@@ -135,52 +134,48 @@ int parse_confile(const char* confile) {
             hloge("SSL certificate verify failed!");
             exit(0);
 #endif
-        }
-        else {
+        } else {
             hlogi("SSL certificate verify ok!");
         }
     }
     // proxy
     auto proxy_keys = ini.GetKeys("proxy");
-    for (const auto& proxy_key : proxy_keys) {
+    for (const auto & proxy_key : proxy_keys) {
         str = ini.GetValue(proxy_key, "proxy");
-        if (str.empty()) continue;
+        if (str.empty())
+            continue;
         if (proxy_key[0] == '/') {
             // reverse proxy
-            const std::string& path = proxy_key;
+            const std::string & path = proxy_key;
             std::string proxy_url = hv::ltrim(str, "> ");
             hlogi("reverse_proxy %s => %s", path.c_str(), proxy_url.c_str());
             g_http_service.Proxy(path.c_str(), proxy_url.c_str());
-        }
-        else if (strcmp(proxy_key.c_str(), "proxy_connect_timeout") == 0) {
+        } else if (strcmp(proxy_key.c_str(), "proxy_connect_timeout") == 0) {
             g_http_service.proxy_connect_timeout = atoi(str.c_str());
-        }
-        else if (strcmp(proxy_key.c_str(), "proxy_read_timeout") == 0) {
+        } else if (strcmp(proxy_key.c_str(), "proxy_read_timeout") == 0) {
             g_http_service.proxy_read_timeout = atoi(str.c_str());
-        }
-        else if (strcmp(proxy_key.c_str(), "proxy_write_timeout") == 0) {
+        } else if (strcmp(proxy_key.c_str(), "proxy_write_timeout") == 0) {
             g_http_service.proxy_write_timeout = atoi(str.c_str());
-        }
-        else if (strcmp(proxy_key.c_str(), "forward_proxy") == 0) {
+        } else if (strcmp(proxy_key.c_str(), "forward_proxy") == 0) {
             hlogi("forward_proxy = %s", str.c_str());
             if (hv_getboolean(str.c_str())) {
                 g_http_service.EnableForwardProxy();
             }
-        }
-        else if (strcmp(proxy_key.c_str(), "trust_proxies") == 0) {
+        } else if (strcmp(proxy_key.c_str(), "trust_proxies") == 0) {
             auto trust_proxies = hv::split(str, ';');
             for (auto trust_proxy : trust_proxies) {
                 trust_proxy = hv::trim(trust_proxy);
-                if (trust_proxy.empty()) continue;
+                if (trust_proxy.empty())
+                    continue;
                 hlogi("trust_proxy %s", trust_proxy.c_str());
                 g_http_service.AddTrustProxy(trust_proxy.c_str());
             }
-        }
-        else if (strcmp(proxy_key.c_str(), "no_proxies") == 0) {
+        } else if (strcmp(proxy_key.c_str(), "no_proxies") == 0) {
             auto no_proxies = hv::split(str, ';');
             for (auto no_proxy : no_proxies) {
                 no_proxy = hv::trim(no_proxy);
-                if (no_proxy.empty()) continue;
+                if (no_proxy.empty())
+                    continue;
                 hlogi("no_proxy %s", no_proxy.c_str());
                 g_http_service.AddNoProxy(no_proxy.c_str());
             }
@@ -197,12 +192,14 @@ int parse_confile(const char* confile) {
     return 0;
 }
 
-static void on_reload(void* userdata) {
+static void on_reload(void * userdata)
+{
     hlogi("reload confile [%s]", g_main_ctx.confile);
     parse_confile(g_main_ctx.confile);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
     // g_main_ctx
     main_ctx_init(argc, argv);
 
@@ -211,7 +208,7 @@ int main(int argc, char** argv) {
     // signal
     signal_init(on_reload);
 
-    const char* signal = get_arg("s");
+    const char * signal = get_arg("s");
     if (signal) {
         signal_handle(signal);
     }
