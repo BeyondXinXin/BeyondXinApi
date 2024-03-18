@@ -1,3 +1,4 @@
 /bin
 /3rdparty/include
 /CMakeLists.txt.user
+/build
